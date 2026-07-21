@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ôn thi — Software Modeling &amp; Design (Gomaa)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F3F5F8;
+  --card:#FFFFFF;
+  --ink:#131C2B;
+  --ink-soft:#5A6577;
+  --line:#C9D2DE;
+  --accent:#2749C9;
+  --accent-dark:#1E3AA8;
+  --accent-bg:#E9EDFB;
+  --ok:#157F4C;
+  --ok-bg:#E4F3EB;
+  --bad:#C2372F;
+  --bad-bg:#F9E9E7;
+  --radius:10px;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --body:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --display:'Space Grotesk','Inter',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{
+  font-family:var(--body);
+  color:var(--ink);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(rgba(39,73,201,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(39,73,201,.045) 1px, transparent 1px);
+  background-size:28px 28px;
+  min-height:100vh;
+  padding:32px 16px 64px;
+  line-height:1.5;
+}
+.wrap{max-width:720px;margin:0 auto}
+
+/* ---------- Header ---------- */
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+  color:var(--ink-soft);text-transform:uppercase;margin-bottom:8px;
+}
+h1{
+  font-family:var(--display);font-weight:700;font-size:1.9rem;
+  letter-spacing:-.01em;line-height:1.15;margin-bottom:4px;
+}
+.sub{color:var(--ink-soft);font-size:.95rem;margin-bottom:22px}
+
+.controls{
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:26px;
+}
+.chsel{
+  font-family:var(--body);font-size:.88rem;font-weight:500;color:var(--ink);
+  padding:9px 12px;border-radius:var(--radius);border:1px solid var(--line);
+  background:var(--card);cursor:pointer;max-width:100%;
+}
+.chsel:hover{border-color:var(--ink)}
+.chsel:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{
+  display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;background:var(--card);
+}
+.seg button{
+  font-family:var(--body);font-size:.88rem;font-weight:500;
+  padding:8px 16px;border:none;background:transparent;color:var(--ink-soft);
+  cursor:pointer;
+}
+.seg button.active{background:var(--ink);color:#fff}
+.seg button:not(.active):hover{color:var(--ink)}
+
+.toggle{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  font-size:.88rem;color:var(--ink-soft);user-select:none;
+}
+.toggle input{position:absolute;opacity:0;width:0;height:0}
+.toggle .tk{
+  width:34px;height:20px;border-radius:20px;background:var(--line);
+  position:relative;transition:background .15s;flex:none;
+}
+.toggle .tk::after{
+  content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;
+  border-radius:50%;background:#fff;transition:transform .15s;
+}
+.toggle input:checked + .tk{background:var(--accent)}
+.toggle input:checked + .tk::after{transform:translateX(14px)}
+.toggle input:focus-visible + .tk{outline:2px solid var(--accent);outline-offset:2px}
+
+.btn{
+  font-family:var(--body);font-size:.88rem;font-weight:600;
+  padding:9px 18px;border-radius:var(--radius);cursor:pointer;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);
+}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.btn.warn{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.push{margin-left:auto}
+
+/* ---------- Rail: state-diagram progress ---------- */
+.rail{
+  display:flex;align-items:center;gap:0;margin:0 0 26px;padding:0 2px 6px;
+  overflow-x:auto;
+}
+.rail .pseudo{flex:none}
+.rail .init{width:10px;height:10px;border-radius:50%;background:var(--ink)}
+.rail .final{
+  width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);
+  position:relative;flex:none;
+}
+.rail .final::after{
+  content:"";position:absolute;inset:2px;border-radius:50%;background:var(--ink);
+}
+.rail .edge{flex:1;height:2px;background:var(--line);min-width:6px}
+.node{
+  flex:none;width:30px;height:30px;border-radius:50%;
+  border:2px solid var(--line);background:var(--card);
+  font-family:var(--mono);font-size:.7rem;font-weight:500;color:var(--ink-soft);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:transform .1s;
+}
+.rail.dense .node{width:24px;height:24px;font-size:.6rem}
+.rail.dense .edge{min-width:3px}
+.node:hover{transform:scale(1.12)}
+.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.node.current{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.node.picked{border-color:var(--ink);background:var(--ink);color:#fff}
+.node.ok{border-color:var(--ok);background:var(--ok);color:#fff}
+.node.bad{border-color:var(--bad);background:var(--bad);color:#fff}
+
+/* ---------- Question card ---------- */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:26px 26px 22px;box-shadow:0 1px 3px rgba(19,28,43,.05);
+}
+.qmeta{
+  font-family:var(--mono);font-size:.75rem;color:var(--ink-soft);
+  margin-bottom:10px;letter-spacing:.06em;
+}
+.qtext{
+  font-family:var(--display);font-weight:500;font-size:1.22rem;
+  line-height:1.35;margin-bottom:18px;
+}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{
+  display:flex;gap:12px;align-items:flex-start;text-align:left;
+  width:100%;padding:12px 14px;border-radius:var(--radius);
+  border:1.5px solid var(--line);background:var(--card);
+  font-family:var(--body);font-size:.97rem;color:var(--ink);
+  cursor:pointer;line-height:1.45;transition:border-color .12s,background .12s;
+}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.opt .tag{
+  font-family:var(--mono);font-size:.8rem;font-weight:500;flex:none;
+  width:26px;height:26px;border-radius:6px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;margin-top:1px;
+  color:var(--ink-soft);
+}
+.opt.sel{border-color:var(--accent);background:var(--accent-bg)}
+.opt.sel .tag{border-color:var(--accent);background:var(--accent);color:#fff}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)}
+.opt.ok .tag{border-color:var(--ok);background:var(--ok);color:#fff}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.opt.bad .tag{border-color:var(--bad);background:var(--bad);color:#fff}
+.opt.dim{opacity:.55}
+.opt:disabled{cursor:default}
+
+.feedback{
+  margin-top:16px;padding:10px 14px;border-radius:var(--radius);
+  font-size:.9rem;font-weight:500;display:none;
+}
+.feedback.ok{display:block;background:var(--ok-bg);color:var(--ok)}
+.feedback.bad{display:block;background:var(--bad-bg);color:var(--bad)}
+
+.nav{
+  display:flex;gap:10px;align-items:center;margin-top:20px;
+}
+.hint{
+  font-family:var(--mono);font-size:.72rem;color:var(--ink-soft);
+  margin-top:18px;text-align:center;
+}
+
+/* ---------- Results ---------- */
+.results{display:none}
+.results.show{display:block}
+.score-line{
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px;
+}
+.score-big{font-family:var(--display);font-weight:700;font-size:2.6rem;letter-spacing:-.02em}
+.score-note{color:var(--ink-soft);font-size:.95rem}
+.rlist{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.ritem{
+  display:flex;gap:12px;align-items:baseline;padding:10px 14px;
+  border-radius:var(--radius);border:1px solid var(--line);
+  background:var(--card);cursor:pointer;font-size:.92rem;text-align:left;
+  width:100%;color:var(--ink);font-family:var(--body);
+}
+.ritem:hover{border-color:var(--ink)}
+.ritem .st{font-family:var(--mono);font-size:.78rem;font-weight:500;flex:none;width:64px}
+.ritem.ok .st{color:var(--ok)}
+.ritem.bad .st{color:var(--bad)}
+.ractions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+
+@media (max-width:520px){
+  h1{font-size:1.5rem}
+  .card{padding:20px 16px}
+  .node{width:24px;height:24px;font-size:.62rem}
+  .rail.dense .node{width:21px;height:21px;font-size:.55rem}
+  .score-big{font-size:2.1rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">H. Gomaa · Trắc nghiệm ôn thi</div>
+  <h1>Software Modeling &amp; Design</h1>
+  <p class="sub" id="sub"></p>
+
+  <div class="controls">
+    <select id="chapterSel" class="chsel" onchange="restart()" aria-label="Chọn chương"></select>
+    <div class="seg" role="group" aria-label="Chế độ">
+      <button id="modePractice" class="active" onclick="setMode('practice')">Luyện tập</button>
+      <button id="modeTest" onclick="setMode('test')">Kiểm tra</button>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="shuffleChk" onchange="restart()">
+      <span class="tk"></span>
+      Trộn câu &amp; đáp án
+    </label>
+    <button class="btn push" onclick="restart()">Làm lại</button>
+  </div>
+
+  <div class="rail" id="rail" aria-label="Tiến độ"></div>
+
+  <div class="card" id="qcard">
+    <div class="qmeta" id="qmeta"></div>
+    <div class="qtext" id="qtext"></div>
+    <div class="opts" id="opts"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nav">
+      <button class="btn" id="prevBtn" onclick="go(-1)">← Trước</button>
+      <button class="btn" id="nextBtn" onclick="go(1)">Sau →</button>
+      <button class="btn primary push" id="submitBtn" onclick="trySubmit()" style="display:none">Nộp bài</button>
+    </div>
+  </div>
+
+  <div class="card results" id="rcard">
+    <div class="qmeta">Kết quả</div>
+    <div class="score-line">
+      <div class="score-big" id="scoreBig"></div>
+      <div class="score-note" id="scoreNote"></div>
+    </div>
+    <div class="rlist" id="rlist"></div>
+    <div class="ractions">
+      <button class="btn primary" onclick="restart()">Làm lại toàn bộ</button>
+      <button class="btn warn" id="retryWrong" onclick="retryWrong()">Làm lại câu sai</button>
+      <button class="btn" onclick="reviewFrom(0)">Xem lại từng câu</button>
+    </div>
+  </div>
+
+  <div class="hint">Phím tắt: 1–4 hoặc A–D chọn đáp án · ← / → chuyển câu · Enter câu tiếp theo</div>
+</div>
+
+<script>
+// ---------- Data: correct = index (0-based) theo thứ tự gốc trong sách ----------
+const CHAPTERS = [
+{
+  name:"Chương 1 — Introduction",
+  short:"C1",
+  questions:[
+    {q:"What is software modeling?",
+     opts:["Developing models of software.",
+           "Designing software applications before coding.",
+           "Developing software diagrams.",
+           "Developing software prototypes."],
+     correct:1},
+    {q:"What is the Unified Modeling Language?",
+     opts:["A programming language for describing object-oriented models.",
+           "A diagramming tool for drawing object-oriented models.",
+           "A graphical language for describing object-oriented models.",
+           "A standardized graphical language and notation for describing object-oriented models."],
+     correct:3},
+    {q:"What is a software architecture?",
+     opts:["The software inside a building.",
+           "The structure of a client/server system.",
+           "The overall structure of a software system.",
+           "The software classes and their relationships."],
+     correct:2},
+    {q:"What is a software design notation?",
+     opts:["Notes about the software design.",
+           "A graphical or textual description of the software.",
+           "Documentation of the software.",
+           "A systematic approach for producing a design."],
+     correct:1},
+    {q:"What is a software design concept?",
+     opts:["A graphical or textual description of the software.",
+           "Documentation of the software.",
+           "A fundamental idea that can be applied to designing a system.",
+           "A systematic approach for producing a design."],
+     correct:2},
+    {q:"What is a software design strategy?",
+     opts:["A graphical or textual description of the software.",
+           "A fundamental idea that can be applied to designing a system.",
+           "A systematic approach for producing a design.",
+           "An overall plan and direction for developing a design."],
+     correct:3},
+    {q:"What are software structuring criteria?",
+     opts:["Fundamental ideas that can be applied to designing a system.",
+           "Systematic approaches for producing a design.",
+           "Guidelines used to help in structuring a software system into its components.",
+           "Overall plans for developing a design."],
+     correct:2},
+    {q:"What is a software design method?",
+     opts:["A systematic approach for producing a design.",
+           "Guidelines used to help in structuring a software system into its components.",
+           "An overall plan for developing a design.",
+           "A graphical or textual description of the software."],
+     correct:0},
+    {q:"What is a platform-independent model (PIM)?",
+     opts:["A software platform before a commitment is made to a specific hardware platform.",
+           "A precise model of the software architecture before a commitment is made to a specific platform.",
+           "A precise model of the software architecture mapped to a specific platform.",
+           "A graphical or textual description of the software."],
+     correct:1},
+    {q:"What is a platform-specific model (PSM)?",
+     opts:["A specific hardware platform.",
+           "A precise model of the software architecture before a commitment is made to a specific platform.",
+           "A precise model of the software architecture mapped to a specific platform.",
+           "A graphical or textual description of the software."],
+     correct:2}
+  ]
+},
+{
+  name:"Chương 2 — Overview of the UML Notation",
+  short:"C2",
+  questions:[
+    {q:"How is an actor depicted on a use case diagram?",
+     opts:["An oval","A stick figure","A box","A dashed line"],
+     correct:1},
+    {q:"How is a use case depicted on a use case diagram?",
+     opts:["An oval","A stick figure","A box","A dashed line"],
+     correct:0},
+    {q:"How is a class depicted on a class diagram?",
+     opts:["A box with one compartment",
+           "A box with one or two compartments",
+           "A box with one, two, or three compartments",
+           "An oval"],
+     correct:2},
+    {q:"How is an association depicted on a class diagram?",
+     opts:["A solid line joining two class boxes",
+           "A dashed line joining two class boxes",
+           "A diamond touching the upper class box",
+           "An arrowhead touching the upper class box"],
+     correct:0},
+    {q:"How is public visibility depicted for a class element on a class diagram?",
+     opts:["+ sign","− sign","# sign","* sign"],
+     correct:0},
+    {q:"What are the two kinds of UML interaction diagrams?",
+     opts:["Class diagram and sequence diagram",
+           "Sequence diagram and communication diagram",
+           "Class diagram and communication diagram",
+           "Statechart and communication diagram"],
+     correct:1},
+    {q:"What does an interaction diagram depict?",
+     opts:["Objects and links",
+           "Classes and relationships",
+           "Objects and messages",
+           "States and events"],
+     correct:2},
+    {q:"What does a statechart diagram depict?",
+     opts:["Objects and links",
+           "Classes and relationships",
+           "Objects and messages",
+           "States and events"],
+     correct:3},
+    {q:"What is a UML package?",
+     opts:["A box",
+           "A grouping of classes",
+           "A grouping of use cases",
+           "A grouping of model elements"],
+     correct:3},
+    {q:"What does a deployment diagram depict?",
+     opts:["The physical configuration of the system in terms of physical classes and physical connections between the classes",
+           "The physical configuration of the system in terms of physical objects and physical connections between the objects",
+           "The physical configuration of the system in terms of physical nodes and physical connections between the nodes",
+           "The physical configuration of the system in terms of physical computers and physical networks between the computers"],
+     correct:2}
+  ]
+},
+{
+  name:"Chương 3 — Software Life Cycle Models and Processes",
+  short:"C3",
+  questions:[
+    {q:"What is a software life cycle?",
+     opts:["The life of the software",
+           "A cyclic approach to developing software",
+           "A phased approach to developing software",
+           "The life of software developed in cycles"],
+     correct:2},
+    {q:"What is the waterfall life cycle model?",
+     opts:["Software developed under a waterfall",
+           "A process model in which each phase is completed before the next phase is started",
+           "A process model in which phases are overlapped",
+           "A process model in which phases are cyclic"],
+     correct:1},
+    {q:"Which of the following is a limitation of the waterfall life cycle model?",
+     opts:["Software is developed in phases.",
+           "Each phase is completed before the next phase is started.",
+           "Software development is cyclic.",
+           "Software requirements are not properly tested until a working system is available."],
+     correct:3},
+    {q:"Which of the following approaches can overcome the limitation in the previous question?",
+     opts:["Phased software development",
+           "Throwaway prototyping",
+           "Evolutionary prototyping",
+           "Incremental development"],
+     correct:1},
+    {q:"What is evolutionary prototyping?",
+     opts:["Phased software development",
+           "Throwaway prototyping",
+           "Risk-driven development",
+           "Incremental development"],
+     correct:3},
+    {q:"What approach does the spiral model emphasize?",
+     opts:["Phased software development",
+           "Throwaway prototyping",
+           "Risk-driven development",
+           "Incremental development"],
+     correct:2},
+    {q:"What is the goal of software validation?",
+     opts:["Building the system",
+           "Building the right system",
+           "Building the system right",
+           "Testing the system"],
+     correct:1},
+    {q:"What is the goal of software verification?",
+     opts:["Building the system",
+           "Building the right system",
+           "Building the system right",
+           "Testing the system"],
+     correct:2},
+    {q:"What is \u201cwhite box\u201d testing?",
+     opts:["Unit testing",
+           "Integration testing",
+           "Testing with knowledge of the system internals",
+           "Testing without knowledge of the software internals"],
+     correct:2},
+    {q:"What is \u201cblack box\u201d testing?",
+     opts:["System testing",
+           "Integration testing",
+           "Testing with knowledge of the system internals",
+           "Testing without knowledge of the software internals"],
+     correct:3}
+  ]
+},
+{
+  name:"Chương 4 — Software Design and Architecture Concepts",
+  short:"C4",
+  questions:[
+    {q:"Which of the following are object-oriented concepts?",
+     opts:["Modules and interfaces",
+           "Modules and information hiding",
+           "Classes, information hiding, and inheritance",
+           "Concurrency and information hiding"],
+     correct:2},
+    {q:"Which of the following is a characteristic of an object?",
+     opts:["A function or subroutine",
+           "A module",
+           "Groups data and procedures that operate on the data",
+           "Groups a function and an algorithm"],
+     correct:2},
+    {q:"What is a class?",
+     opts:["An object instance",
+           "The implementation of the object",
+           "A collection of objects with the same characteristics",
+           "A collection of objects with different characteristics"],
+     correct:2},
+    {q:"What is an operation (also known as method) of a class?",
+     opts:["Specification and the implementation of a function performed by a class",
+           "Specification and the implementation of a subroutine provided by a class",
+           "Specification and the implementation of a function or procedure provided by a class",
+           "Specification and the implementation of an interface provided by a class"],
+     correct:2},
+    {q:"What is the signature of an operation?",
+     opts:["The operation's name",
+           "The operation's function or subroutine",
+           "The operation's name, parameters, and return value",
+           "The object's interface"],
+     correct:2},
+    {q:"What is the interface of a class?",
+     opts:["The signature of a class",
+           "The specification of operations provided by the class",
+           "The internals of the class",
+           "The implementation of the class"],
+     correct:1},
+    {q:"What is an attribute?",
+     opts:["A description of a class",
+           "An internal property of a class",
+           "A data item held by a class",
+           "A parameter of a class"],
+     correct:2},
+    {q:"What is information hiding in software design?",
+     opts:["Hiding information so that it cannot be found",
+           "Hiding a design decision that is considered likely to change",
+           "Hiding information to make it secure",
+           "Encapsulating data in a class"],
+     correct:1},
+    {q:"What is data abstraction?",
+     opts:["Another name for information hiding",
+           "Encapsulating data so that its structure is hidden",
+           "Storing data in a database",
+           "Storing data in a data structure"],
+     correct:1},
+    {q:"What is inheritance?",
+     opts:["A mechanism for inheriting characteristics from a parent",
+           "A mechanism for sharing and reusing code between classes",
+           "A mechanism for sharing data between classes",
+           "A mechanism for hiding information between classes"],
+     correct:1}
+  ]
+},
+{
+  name:"Chương 5 — Overview of Software Modeling and Design Method (COMET)",
+  short:"C5",
+  questions:[
+    {q:"What is carried out during requirements modeling?",
+     opts:["Functional requirements of the system are described in terms of functions, inputs, and outputs.",
+           "Functional requirements of the system are described in terms of actors and use cases.",
+           "Functional requirements of the system are described textually.",
+           "Functional requirements of the system are determined by interviewing users."],
+     correct:1},
+    {q:"What is carried out during analysis modeling?",
+     opts:["Developing use case models",
+           "Developing data flow and entity-relationship diagrams",
+           "Developing static and dynamic models",
+           "Developing software architectures"],
+     correct:2},
+    {q:"What is carried out during design modeling?",
+     opts:["Developing use case models",
+           "Developing data flow and entity-relationship diagrams",
+           "Developing static and dynamic models",
+           "Developing software architectures"],
+     correct:3},
+    {q:"What is carried out during incremental software construction?",
+     opts:["Detailed design and coding of the classes in a subset of the system",
+           "Detailed design, coding, and unit testing of the classes in a subset of the system",
+           "Coding and unit testing of the classes in a subset of the system",
+           "Unit and integration testing of the classes in a subset of the system"],
+     correct:1},
+    {q:"What is carried out during incremental software integration?",
+     opts:["Implementation of the classes in each software increment",
+           "Unit testing of the classes in each software increment",
+           "Integration testing of the classes in each software increment",
+           "System testing of the classes in each software increment"],
+     correct:2},
+    {q:"What is carried out during system testing?",
+     opts:["White box testing",
+           "Black box testing",
+           "Unit testing",
+           "Integration testing"],
+     correct:1}
+  ]
+},
+{
+  name:"Chương 6 — Use Case Modeling",
+  short:"C6",
+  questions:[
+    {q:"What is a use case?",
+     opts:["A case study involving users",
+           "A sequence of interactions between the user and the system",
+           "A sequence of interactions between the user and the objects in the system",
+           "A sequence of user inputs to the system"],
+     correct:2},
+    {q:"What is an actor in a use case?",
+     opts:["An object inside the system",
+           "A person who performs on stage",
+           "An external entity that interacts with the system",
+           "The customer to whom the system will be delivered"],
+     correct:2},
+    {q:"What is a primary actor?",
+     opts:["The actor who goes on stage first",
+           "The actor that starts the use case",
+           "An actor that participates in the use case",
+           "An object inside the system"],
+     correct:1},
+    {q:"What is a secondary actor?",
+     opts:["The actor who goes on stage second",
+           "The actor that starts the use case",
+           "An actor that participates in the use case",
+           "An object inside the system"],
+     correct:2},
+    {q:"What is an alternative sequence in a use case?",
+     opts:["A sequence that describes an error case",
+           "A sequence that is different from the main sequence",
+           "A sequence that describes interactions with a secondary actor",
+           "A sequence that describes interactions with a primary actor"],
+     correct:1},
+    {q:"What can an inclusion use case be used for?",
+     opts:["To describe an inclusive use case",
+           "To describe a lengthy interaction with an actor",
+           "To describe functionality that is common to more than one use case",
+           "To describe a use case that includes other use cases"],
+     correct:2},
+    {q:"What can an extension use case be used for?",
+     opts:["To describe a lengthy interaction with an actor",
+           "To describe functionality that is common to more than one use case",
+           "To describe the functionality of a use case that is extended by another use case(s)",
+           "To describe a conditional part of a different use case that is only executed under certain circumstances"],
+     correct:3},
+    {q:"What can an activity diagram be used for in use case modeling?",
+     opts:["To depict the sequence of activities executed by all the use cases in the system",
+           "To depict the sequence of external activities that the use case interacts with",
+           "To depict the sequence of active objects in a use case",
+           "To depict the activities in the main and alternative sequences of a use case"],
+     correct:3},
+    {q:"How can a nonfunctional requirement be described in a use case model?",
+     opts:["In a separate section of the use case description",
+           "As a use case precondition",
+           "As a use case postcondition",
+           "In a separate document"],
+     correct:0},
+    {q:"What is a use case package?",
+     opts:["A package describing the actors in the system",
+           "A package describing the use cases in the system",
+           "A group of related use cases",
+           "The package of objects that participate in the use case"],
+     correct:2}
+  ]
+},
+{
+  name:"Chương 7 — Static Modeling",
+  short:"C7",
+  questions:[
+    {q:"What is a class?",
+     opts:["A course",
+           "An object instance",
+           "A client or server in the system",
+           "A collection of objects with the same characteristics"],
+     correct:3},
+    {q:"What is an attribute?",
+     opts:["A relationship between two classes",
+           "A parameter of an operation or method",
+           "A data value held by an object in a class",
+           "The return value from an operation"],
+     correct:2},
+    {q:"What is an association?",
+     opts:["A relationship between two classes",
+           "A relationship between two objects",
+           "A link between two classes",
+           "A link between two objects"],
+     correct:0},
+    {q:"What is meant by the multiplicity of an association?",
+     opts:["The number of associations in a class",
+           "The number of associations between two classes",
+           "How many instances of one class relate to how many instances of another class",
+           "How many instances of one class relate to a single instance of another class."],
+     correct:3},
+    {q:"What is an association class?",
+     opts:["A class with multiple associations",
+           "A class with one association",
+           "A class that models an association between two or more classes",
+           "A class that models an association between two or more objects"],
+     correct:2},
+    {q:"What is a generalization/specialization hierarchy?",
+     opts:["A whole/part relationship",
+           "An inheritance relationship",
+           "An association between a generalized class and a specialized class",
+           "A layered hierarchy"],
+     correct:1},
+    {q:"What is a composition hierarchy?",
+     opts:["A weak form of a generalization/specialization hierarchy",
+           "A strong form of a generalization/specialization hierarchy",
+           "A weak form of a whole/part relationship",
+           "A strong form of a whole/part relationship"],
+     correct:3},
+    {q:"What is an aggregation hierarchy?",
+     opts:["A weak form of a generalization/specialization hierarchy",
+           "A strong form of a generalization/specialization hierarchy",
+           "A weak form of a whole/part relationship",
+           "A strong form of a whole/part relationship"],
+     correct:2},
+    {q:"What does the system context class diagram define?",
+     opts:["The entity classes in the system",
+           "How the system interfaces to other systems",
+           "The boundary between the system and the external environment",
+           "The context classes in the system"],
+     correct:2},
+    {q:"What is an entity class?",
+     opts:["A class on an entity/relationship diagram",
+           "A class that stores data",
+           "A class that interfaces to an external entity",
+           "An external class"],
+     correct:1}
+  ]
+},
+{
+  name:"Chương 8 — Object and Class Structuring",
+  short:"C8",
+  questions:[
+    {q:"What is a boundary object?",
+     opts:["An external object",
+           "An object that stores data",
+           "An object that communicates with an external object",
+           "An object that controls other objects"],
+     correct:2},
+    {q:"What is a control object?",
+     opts:["An object that depends on other objects",
+           "An object that communicates with an external object",
+           "An object that controls other objects",
+           "An object that is controlled by other objects"],
+     correct:2},
+    {q:"What is a state-dependent control object?",
+     opts:["An object that depends on a state machine",
+           "An object that communicates with a state machine",
+           "An object that controls a state machine",
+           "An object that executes a state machine"],
+     correct:3},
+    {q:"What is a coordinator object?",
+     opts:["A manager object",
+           "An object that makes decisions based on a state machine",
+           "A decision-making object",
+           "An object that decides which entity object to interact with"],
+     correct:2},
+    {q:"How would you determine a boundary class from the context diagram?",
+     opts:["By looking at it",
+           "By selecting the external classes on the context diagram",
+           "By determining the software classes that communicate with the external classes",
+           "By drawing the boundary between the hardware and software classes"],
+     correct:2},
+    {q:"What is a timer object?",
+     opts:["An external clock",
+           "An internal clock",
+           "An object that is awakened by an external timer",
+           "An object that interacts with a clock"],
+     correct:2},
+    {q:"What do class structuring criteria help with?",
+     opts:["Structuring an application into classes",
+           "Defining the attributes of a class",
+           "Defining the associations of a class",
+           "Defining the operations of a class"],
+     correct:0},
+    {q:"What is the classification process for application classes analogous to?",
+     opts:["Categorizing books in a library",
+           "Deciding how many copies of a book are needed",
+           "Finding the classrooms in a school",
+           "Identifying what labs the school has"],
+     correct:0},
+    {q:"What is the purpose of a stereotype in class structuring?",
+     opts:["To label a class according to its class structuring criterion",
+           "To identify the objects that belong to the same class",
+           "To distinguish between external objects and software objects",
+           "To identify the association between two classes"],
+     correct:0},
+    {q:"What is a business logic object?",
+     opts:["An object used in business applications",
+           "An object that defines business-specific application logic",
+           "The internal logic of an object",
+           "A business object that determines whether a client request is logical"],
+     correct:1}
+  ]
+},
+{
+  name:"Chương 9 — Dynamic Interaction Modeling",
+  short:"C9",
+  questions:[
+    {q:"What does an interaction diagram depict?",
+     opts:["The state and transitions inside a control object",
+           "Classes and their relationships",
+           "Software objects and the sequence of their interactions",
+           "The external objects communicating with the system"],
+     correct:2},
+    {q:"How is an actor depicted on an interaction diagram?",
+     opts:["An actor has an association with the interaction diagram.",
+           "An actor can provide input to or receive output from a boundary object.",
+           "An actor can provide input to or receive output from a boundary class.",
+           "An instance of an actor can provide input to or receive output from a boundary object."],
+     correct:3},
+    {q:"What does a sequence diagram depict?",
+     opts:["The sequence of external objects communicating with each other",
+           "Classes and their relationships",
+           "Software objects and the sequence of their interactions",
+           "The external objects communicating with the system"],
+     correct:2},
+    {q:"What does a communication diagram depict?",
+     opts:["The sequence of external objects communicating with each other",
+           "Classes and their relationships",
+           "Software objects and the sequence of their interactions",
+           "The external objects communicating with the system"],
+     correct:2},
+    {q:"What is the instance form of an interaction diagram?",
+     opts:["Depicts several object instances interacting with each other",
+           "Depicts one possible sequence of interactions among object instances",
+           "Depicts all possible interactions among object instances",
+           "Depicts all object instances and their links to each other"],
+     correct:1},
+    {q:"What is the generic form of an interaction diagram?",
+     opts:["Depicts several objects interacting with each other",
+           "Depicts one possible sequence of interactions among objects",
+           "Depicts all possible interactions among objects",
+           "Depicts all classes and their associations with each other"],
+     correct:2},
+    {q:"During dynamic interaction modeling, use cases are realized as follows:",
+     opts:["Determine objects that participate in each use case and the sequence of interactions among them.",
+           "Determine external objects and the sequence in which they provide inputs to and receive outputs from each use case.",
+           "Determine sequence of interactions among use cases.",
+           "Determine how a use case is depicted through internal states and transitions between them."],
+     correct:0},
+    {q:"Which of the following interactions could happen on an interaction diagram?",
+     opts:["An external user sends a message to a user interaction object.",
+           "An external user sends a message to an entity object.",
+           "An external user sends a message to an I/O object.",
+           "An external user sends a message to a printer object."],
+     correct:0},
+    {q:"Which of the following interactions is NOT likely to happen on an interaction diagram?",
+     opts:["A user interaction object sends a message to an entity object.",
+           "An input object sends a message to a state-dependent control object.",
+           "An input object sends a message to a printer object.",
+           "A user interaction object sends a message to a proxy object."],
+     correct:2},
+    {q:"What kind of object would be the first object to receive an input from an external object?",
+     opts:["A user interaction object",
+           "A proxy object",
+           "An entity object",
+           "A boundary object"],
+     correct:3}
+  ]
+},
+{
+  name:"Chương 10 — Finite State Machines",
+  short:"C10",
+  questions:[
+    {q:"What is a state in a state machine?",
+     opts:["A recognizable situation that exists over an interval of time",
+           "A condition that is True or False",
+           "An input from the external environment",
+           "An output from the system"],
+     correct:0},
+    {q:"What is an event in a state machine?",
+     opts:["A discrete signal that causes a change of state",
+           "An input from the external environment",
+           "An input that is True or False",
+           "The result of a state transition"],
+     correct:0},
+    {q:"What is an action in a state machine?",
+     opts:["An occurrence at a point in time",
+           "A cause of a state transition",
+           "An interval between two successive events",
+           "A computation that executes as a result of a state transition"],
+     correct:3},
+    {q:"What is an entry action in a state machine?",
+     opts:["An action that is performed when the state is entered",
+           "An action that is performed when the state is left",
+           "An action that starts executing when the state is entered and completes executing when the state is left",
+           "An action that executes as a result of a state transition"],
+     correct:0},
+    {q:"What is an exit action in a state machine?",
+     opts:["An action that is performed when the state is entered",
+           "An action that is performed when the state is left",
+           "An action that starts executing when the state is entered and completes executing when the state is left",
+           "An action that executes as a result of a state transition"],
+     correct:1},
+    {q:"What is a condition used for in a state machine?",
+     opts:["A conditional action",
+           "A conditional state",
+           "A conditional state transition",
+           "A conditional event"],
+     correct:2},
+    {q:"What is a state transition into a composite state equivalent to?",
+     opts:["A transition into only one of the substates",
+           "A transition into each of the substates",
+           "A transition into none of the substates",
+           "A transition into any one of the substates"],
+     correct:0},
+    {q:"What is a state transition out of a composite state equivalent to?",
+     opts:["A transition out of only one of the substates",
+           "A transition out of each of the substates",
+           "A transition out of none of the substates",
+           "A transition out of any one of the substates"],
+     correct:1},
+    {q:"How does a composite state relate to a substate?",
+     opts:["A composite state is decomposed into substates.",
+           "Composite states are composed into substates.",
+           "A composite state transitions to a substate.",
+           "A substate transitions to a composite state."],
+     correct:0},
+    {q:"If two actions are shown on a given state transition, which of the following is true?",
+     opts:["The two actions are dependent on each other.",
+           "The two actions are independent of each other.",
+           "One action provides an input to the other action.",
+           "The second action executes when the first action completes execution."],
+     correct:1}
+  ]
+},
+{
+  name:"Chương 11 — State-Dependent Dynamic Interaction Modeling",
+  short:"C11",
+  questions:[
+    {q:"What does a state-dependent interaction involve?",
+     opts:["A control object",
+           "A state-dependent entity object",
+           "A state-dependent control object",
+           "A state-dependent user interaction object"],
+     correct:2},
+    {q:"Which kind of object executes a state machine?",
+     opts:["Any software object",
+           "An entity object",
+           "A state-dependent control object",
+           "A statechart"],
+     correct:2},
+    {q:"An input message to a state-dependent control object corresponds to:",
+     opts:["An event on the internal state machine",
+           "An action on the internal state machine",
+           "A condition on the internal state machine",
+           "A state on the internal state machine"],
+     correct:0},
+    {q:"An output message from a state-dependent control object corresponds to:",
+     opts:["An event on the internal state machine",
+           "An action on the internal state machine",
+           "A condition on the internal state machine",
+           "A state on the internal state machine"],
+     correct:1},
+    {q:"An interaction diagram should be developed for:",
+     opts:["Only the main sequence of the use case",
+           "The main sequence and every alternative sequence of the use case",
+           "The main sequence and a representative alternative sequence of the use case",
+           "The alternative sequences of the use case"],
+     correct:1},
+    {q:"Which of the following could happen on an interaction diagram?",
+     opts:["A state-dependent control object sends a message to an entity object.",
+           "A state-dependent control object sends a message to a coordinator object.",
+           "A state-dependent control object sends a message to a printer object.",
+           "All of the above"],
+     correct:3},
+    {q:"If the same state machine is used in more than one use case, how is this modeled on interaction diagrams?",
+     opts:["Develop one state-dependent control object for each use case.",
+           "Develop one state-dependent control object containing states from each use case.",
+           "Develop a hierarchical state machine.",
+           "Develop a coordinator object."],
+     correct:1},
+    {q:"How would two state-dependent control objects communicate with each other?",
+     opts:["By sending messages to each other",
+           "By transitioning to the same state",
+           "Through an entity object",
+           "Through a proxy object"],
+     correct:0},
+    {q:"An object can send alternative messages a or b to a state-dependent control object. How is this handled in the state machine?",
+     opts:["One state with a different transition out of it for each incoming message",
+           "One state for each of the alternative messages",
+           "A composite state to handle the alternative messages",
+           "A substate for each alternative message"],
+     correct:0},
+    {q:"In a system in which a client object executes a state machine and communicates with a service, which of the following is true?",
+     opts:["The client has a state-dependent control object but the service does not.",
+           "The service has a state-dependent control object but the client does not.",
+           "Both the client and the service have state-dependent control objects.",
+           "Neither the client nor the service has a state-dependent control object."],
+     correct:0}
+  ]
+},
+{
+  name:"Chương 12 — Overview of Software Architecture",
+  short:"C12",
+  questions:[
+    {q:"What does the software architecture describe?",
+     opts:["The software inside a building",
+           "The structure of a client/server system",
+           "The overall structure of a software system",
+           "The software classes and their relationships"],
+     correct:2},
+    {q:"Which of the following statements is NOT true for a component?",
+     opts:["A composite object composed of other objects",
+           "An operation",
+           "A simple object",
+           "Provides an interface"],
+     correct:1},
+    {q:"What is a structural view of a software architecture?",
+     opts:["A view in terms of a module hierarchy",
+           "A view in terms of components and connectors",
+           "A view of the physical configuration in terms of nodes and interconnections",
+           "A view in terms of objects and messages"],
+     correct:1},
+    {q:"What is a dynamic view of a software architecture?",
+     opts:["A view in terms of a module hierarchy",
+           "A view in terms of components and connectors",
+           "A view of the physical configuration in terms of nodes and interconnections",
+           "A view in terms of objects and messages"],
+     correct:3},
+    {q:"What is a deployment view of a software architecture?",
+     opts:["A static view in terms of a module hierarchy",
+           "A static view in terms of components and connectors",
+           "A view of the physical configuration in terms of nodes and interconnections",
+           "A dynamic interaction view in terms of objects and messages"],
+     correct:2},
+    {q:"What is a software architectural pattern?",
+     opts:["The structure of the major subsystems of a system",
+           "The components and connectors in a software architecture",
+           "A small group of collaborating objects",
+           "A recurring architecture used in a variety of systems"],
+     correct:0},
+    {q:"What happens in a Layers of Abstraction pattern?",
+     opts:["Each layer uses services in the layer immediately below it.",
+           "Each layer uses services in the layer immediately above it.",
+           "Each layer uses services in the layers immediately above it and below it.",
+           "Each layer is independent of the other layers."],
+     correct:0},
+    {q:"What happens in a Call/Return pattern?",
+     opts:["A calling operation in the calling object sends a message to an operation (a.k.a. method) in the called object.",
+           "A calling operation in the calling object invokes an operation (a.k.a. method) in the called object.",
+           "The calling object waits for a response from the called object.",
+           "The calling object does not wait for a response from the called object."],
+     correct:1},
+    {q:"A producer sends a message to a consumer. Which one of the following is asynchronous message communication?",
+     opts:["The producer waits for a response from the consumer.",
+           "The producer does not wait for a response from the consumer.",
+           "The producer goes to sleep.",
+           "The producer waits for a timeout."],
+     correct:1},
+    {q:"A producer sends a message to a consumer. Which one of the following is synchronous message communication with reply?",
+     opts:["The producer waits for a response from the consumer.",
+           "The producer does not wait for a response from the consumer.",
+           "The producer goes to sleep.",
+           "The producer waits for a timeout."],
+     correct:0}
+  ]
+},
+{
+  name:"Chương 13 — Software Subsystem Architectural Design",
+  short:"C13",
+  questions:[
+    {q:"What is an integrated communication diagram?",
+     opts:["A communication diagram formed by combining objects",
+           "A synthesis of all the communication diagrams developed to support the use cases",
+           "A communication diagram depicting the objects that realize a use case",
+           "A communication diagram that integrates the entity objects from the static model"],
+     correct:1},
+    {q:"Which of the following objects should be assigned to the same subsystem?",
+     opts:["Objects that are part of the same composite object",
+           "Client and server objects",
+           "User interface and entity objects",
+           "Objects that are associated with each other"],
+     correct:0},
+    {q:"Objects that are in geographically different locations should be:",
+     opts:["In the same subsystem",
+           "In different subsystems",
+           "In a composite subsystem",
+           "In layered subsystems"],
+     correct:1},
+    {q:"If scope of control is used in subsystem structuring, then:",
+     opts:["A user interface object is placed in the same subsystem as an entity object it updates.",
+           "A state-dependent control object is placed in the same subsystem as the objects it controls.",
+           "A state-dependent control object is placed in a different subsystem from the objects it controls.",
+           "A user interface object is placed in a different subsystem from an entity object it updates."],
+     correct:1},
+    {q:"How should an external object be designed to interface to the system?",
+     opts:["It should interface to one subsystem.",
+           "It should interface to several subsystems.",
+           "It should interface to every subsystem.",
+           "It should interface to none of the subsystems."],
+     correct:0},
+    {q:"A user interface subsystem is a type of:",
+     opts:["Control subsystem",
+           "Service subsystem",
+           "Client subsystem",
+           "I/O subsystem"],
+     correct:2},
+    {q:"Which of the following objects are NOT likely to be in the same subsystem?",
+     opts:["User interface object and entity object",
+           "State-dependent control object and coordinator object",
+           "Business logic object and entity object",
+           "I/O object and state-dependent control object"],
+     correct:1},
+    {q:"Which of the following subsystems is NOT likely to be a client subsystem?",
+     opts:["Control subsystem",
+           "User interaction subsystem",
+           "Service subsystem",
+           "I/O subsystem"],
+     correct:2},
+    {q:"When is a coordinator subsystem required?",
+     opts:["If the subsystem needs to coordinate several internal objects",
+           "If the subsystem needs to coordinate multiple I/O devices",
+           "If the subsystem receives messages from multiple client subsystems",
+           "If the subsystem needs to coordinate the execution of other subsystems"],
+     correct:3},
+    {q:"When is a control subsystem required?",
+     opts:["If the subsystem needs to control several internal objects",
+           "If the subsystem needs to control multiple I/O devices",
+           "If the subsystem needs to control multiple client subsystems",
+           "If the subsystem needs to control the execution of other subsystems"],
+     correct:0}
+  ]
+},
+{
+  name:"Chương 14 — Designing Object-Oriented Software Architectures",
+  short:"C14",
+  questions:[
+    {q:"What is an information hiding object?",
+     opts:["An active object that encapsulates data",
+           "A passive object that encapsulates data",
+           "A class that encapsulates data",
+           "A task that encapsulates data"],
+     correct:1},
+    {q:"What is a class interface?",
+     opts:["Specifies the internals of the operations of a class",
+           "Specifies the externally visible operations of a class",
+           "Specifies the parameters of a class operation.",
+           "Specifies the signature of a class operation"],
+     correct:1},
+    {q:"Which of the following is NOT an object-oriented concept?",
+     opts:["Information hiding",
+           "Class",
+           "Subclass",
+           "Subroutine"],
+     correct:3},
+    {q:"Which of the following is a class that realizes an interface?",
+     opts:["The class calls the interface.",
+           "The class implements the interface.",
+           "The class is called by the interface.",
+           "The class is independent of the interface."],
+     correct:2},
+    {q:"Which of the following is an entity class?",
+     opts:["An information hiding class",
+           "A subclass",
+           "A control class",
+           "A data abstraction class"],
+     correct:3},
+    {q:"What does a state machine class encapsulate?",
+     opts:["A state transition table",
+           "A statechart",
+           "The current state of the machine",
+           "A state transition table and the current state of the machine"],
+     correct:3},
+    {q:"Which of the following is unlikely to be a graphical user interface class?",
+     opts:["A menu",
+           "A window",
+           "A button",
+           "A pin"],
+     correct:3},
+    {q:"Which of the following is unlikely to be encapsulated in a business logic class?",
+     opts:["A business rule",
+           "Calls to operations of an entity class",
+           "Deny cash withdrawal if balance of account is less than $10",
+           "A dialog box"],
+     correct:3},
+    {q:"Which of the following is NOT allowed through inheritance?",
+     opts:["Subclass inherits attributes from superclass.",
+           "Subclass inherits operations from superclass.",
+           "Subclass redefines attributes inherited from superclass.",
+           "Subclass redefines operations inherited from superclass."],
+     correct:2},
+    {q:"Which of the following is true for an abstract class?",
+     opts:["It is used as a template for creating objects.",
+           "It is used as a template for creating subclasses.",
+           "It is used as a template for creating classes.",
+           "It is used as a template for creating superclasses."],
+     correct:1},
+    {q:"In object-oriented design, polymorphism means that:",
+     opts:["Different classes may have the same name.",
+           "Different classes may have the same interface name.",
+           "Different classes may have the same superclass name.",
+           "Different classes may have the same operation name."],
+     correct:3},
+    {q:"With polymorphism and dynamic binding, an object can:",
+     opts:["Invoke operation of different names on the same objects.",
+           "Invoke operations of different names on different objects.",
+           "Invoke an operation of the same name on the same object.",
+           "Invoke an operation of the same name on different objects."],
+     correct:3}
+  ]
+},
+{
+  name:"Chương 15 — Designing Client/Server Software Architectures",
+  short:"C15",
+  questions:[
+    {q:"What is a server?",
+     opts:["A hardware/software system that serves customers",
+           "A subsystem that makes requests and waits for the responses",
+           "A subsystem that responds to requests from clients",
+           "A hardware/software system that provides one or more services for multiple clients"],
+     correct:3},
+    {q:"The basic client/single service architectural pattern states that:",
+     opts:["Multiple clients request services, and multiple services fulfill client requests.",
+           "Multiple clients request services, and a service fulfills client requests.",
+           "A client requests services, and a service fulfills client requests.",
+           "A client requests services, and multiple services fulfill client requests."],
+     correct:1},
+    {q:"In a Multi-tier Client/Service architectural pattern, which of the following is true about an intermediate tier?",
+     opts:["An intermediate tier is a client tier.",
+           "An intermediate tier is a service tier.",
+           "An intermediate tier is both a control tier and a service tier.",
+           "An intermediate tier is both a client tier and a service tier."],
+     correct:3},
+    {q:"How is Multiple Client/Multiple Service architectural pattern different from a Multiple Client/Single Service architectural pattern?",
+     opts:["A service can receive requests from multiple clients.",
+           "A client can send requests to multiple services.",
+           "A client can send requests to other clients.",
+           "A service can respond to requests from multiple clients."],
+     correct:1},
+    {q:"How is a sequential service designed?",
+     opts:["One object that responds to requests from clients",
+           "Multiple objects that respond to requests from clients",
+           "One subsystem that responds to requests from clients",
+           "Multiple subsystems that respond to requests from clients"],
+     correct:0},
+    {q:"How is a concurrent service designed?",
+     opts:["One object that responds to requests from clients",
+           "Multiple objects that respond to requests from clients",
+           "One subsystem that responds to requests from clients",
+           "Multiple subsystems that respond to requests from clients"],
+     correct:1},
+    {q:"What is a database wrapper class?",
+     opts:["A class that encapsulates a data structure",
+           "A class that encapsulates a database",
+           "A class that encapsulates the details of how to access data in a database",
+           "A class that encapsulates a relational table"],
+     correct:2},
+    {q:"When designing an entity class as a relational table, which of the following is NOT true?",
+     opts:["The relational table has multiple primary keys.",
+           "The relational table has multiple foreign keys.",
+           "The relational table has a primary key.",
+           "The relational table has a concatenated primary key."],
+     correct:0},
+    {q:"When mapping an aggregation hierarchy to a relational table, which of the following is NOT true?",
+     opts:["The aggregate and part tables have different primary keys.",
+           "The aggregate and part tables have the same primary key.",
+           "The primary key of the aggregate table is a foreign key of the part table.",
+           "The primary key of the part table is a foreign key of the aggregate table."],
+     correct:3},
+    {q:"When mapping a generalization/specialization relationship to a relational database, which of the following is NOT possible?",
+     opts:["The superclass and each subclass are designed as relational tables.",
+           "Only subclasses are designed as relational tables.",
+           "The aggregate and part classes are designed as relational tables.",
+           "Only the superclass is designed as a relational table."],
+     correct:2}
+  ]
+},
+{
+  name:"Chương 16 — Designing Service-Oriented Architectures",
+  short:"C16",
+  questions:[
+    {q:"What is a service-oriented architecture (SOA)?",
+     opts:["A distributed software architecture consisting of multiple related services",
+           "A distributed software architecture consisting of multiple autonomous services",
+           "A distributed client/service architecture",
+           "A distributed software architecture"],
+     correct:1},
+    {q:"Which of the following properties DOES NOT apply to a service?",
+     opts:["Reusable",
+           "Discoverable",
+           "Fixed",
+           "Autonomous"],
+     correct:2},
+    {q:"In a SOA, which of the following is NOT true?",
+     opts:["A client communicates with a specific service provided on a fixed server configuration.",
+           "A client discovers and links to a service.",
+           "Multiple clients communicate with a service.",
+           "Standard protocols are provided to allow clients to communicate with services."],
+     correct:0},
+    {q:"What is an object broker?",
+     opts:["An object that breaks into a system",
+           "An object that sends requests to other objects",
+           "An object that handles requests sent by other objects",
+           "An object that mediates interactions between clients and services"],
+     correct:3},
+    {q:"Why does a service register with a broker?",
+     opts:["So that service requesters can discover it",
+           "So that a service can interrogate the broker",
+           "So that the registry is up to date",
+           "So that the service can relocate"],
+     correct:0},
+    {q:"When is it particularly useful to use the Broker Handle pattern in place of the Broker Forwarding pattern?",
+     opts:["If the client only communicates with the service once",
+           "If the client needs to have a dialog with the service",
+           "If the client knows the type of service required but not the specific service",
+           "If the client needs to provide the broker with a handle"],
+     correct:1},
+    {q:"Yellow pages brokering is useful when a service requester:",
+     opts:["Needs to discover the location of the service",
+           "Knows the type of service required but not the specific service",
+           "Knows the specific service required but not the type of service",
+           "Needs to discover the broker"],
+     correct:1},
+    {q:"What is a transaction?",
+     opts:["Consists of two or more operations",
+           "Consists of one operation",
+           "Consists of two or more operations that are indivisible",
+           "Consists of two or more operations that are divisible"],
+     correct:2},
+    {q:"What is a compound transaction?",
+     opts:["The compound transaction is indivisible.",
+           "The compound transaction is atomic.",
+           "The compound transaction is decomposed into atomic transactions.",
+           "The compound transaction is decomposed into subatomic transactions."],
+     correct:2},
+    {q:"With a Negotiation pattern, which of the following is NOT true?",
+     opts:["The client agent can propose a service.",
+           "The service agent can offer a service in response to a client agent proposal.",
+           "The client agent can request a service.",
+           "The service agent can offer a service in response to a client agent request."],
+     correct:3}
+  ]
+},
+{
+  name:"Chương 17 — Designing Component-Based Software Architectures",
+  short:"C17",
+  questions:[
+    {q:"In a distributed component-based software architecture, which of the following statements is the most complete description of component deployment?",
+     opts:["Component instances can be deployed to different nodes in a geographically distributed environment.",
+           "Component instances can be deployed to different nodes in a geographically distributed environment before design.",
+           "Component instances can be deployed to different nodes in a geographically distributed environment before implementation.",
+           "Component instances can be deployed to different nodes in a geographically distributed environment after design and implementation."],
+     correct:3},
+    {q:"What does a component interface consist of?",
+     opts:["The externally visible operations of a component",
+           "The operations provided by a component",
+           "The operations required by a component",
+           "The operations that a component supports"],
+     correct:0},
+    {q:"What does a component's provided interface consist of?",
+     opts:["The operations that a component must fulfill",
+           "The operations inside a component",
+           "The operations that a component uses",
+           "The operations of a component"],
+     correct:0},
+    {q:"What does a component's required interface consist of?",
+     opts:["The operations that a component must fulfill",
+           "The operations inside a component",
+           "The operations that a component uses",
+           "The visible operations of a component"],
+     correct:1},
+    {q:"What does a connector join?",
+     opts:["The provided port of one component to the required port of another component",
+           "The provided port of one component to the provided port of another component",
+           "The required port of one component to the provided port of another component",
+           "The required port of one component to the required port of another component"],
+     correct:2},
+    {q:"What does a delegation connector join?",
+     opts:["An outer provided port to an inner provided port",
+           "An outer provided port to an inner required port",
+           "An outer required port to an inner provided port",
+           "An outer provided port to an outer required port"],
+     correct:0},
+    {q:"What is broadcast message communication?",
+     opts:["A message sent to several recipients",
+           "A message sent to a specific recipient",
+           "A message sent to all recipients",
+           "A message sent to recipients who are members of a group"],
+     correct:2},
+    {q:"What are the communication characteristics of subscription/notification?",
+     opts:["A message sent to several recipients",
+           "A message sent to a specific recipient",
+           "A message sent to all recipients",
+           "A message sent to recipients who have joined a group"],
+     correct:3},
+    {q:"During application deployment:",
+     opts:["The application is executed.",
+           "Component instances are executed.",
+           "Component instances are assigned to hardware nodes.",
+           "Component instances are instantiated."],
+     correct:2},
+    {q:"What is an advantage of localized autonomy in component-based design?",
+     opts:["If a component goes down, other components can continue to execute.",
+           "Components execute concurrently.",
+           "Components are distributed.",
+           "Components communicate using messages."],
+     correct:0}
+  ]
+},
+{
+  name:"Chương 18 — Designing Concurrent and Real-Time Software Architectures",
+  short:"C18",
+  questions:[
+    {q:"What is the difference between an active object and a passive object?",
+     opts:["An active object controls a passive object.",
+           "An active object does not have a thread of control; a passive object has a thread of control.",
+           "An active object executes in a distributed system; a passive object executes in a centralized system.",
+           "An active object has a thread of control; a passive object does not have a thread of control."],
+     correct:3},
+    {q:"What is an event-driven input task?",
+     opts:["A task that executes every few seconds",
+           "A task that controls other tasks",
+           "A task that receives inputs from an external device when it generates interrupts",
+           "A task that checks whether there is new input from an external device"],
+     correct:2},
+    {q:"What is a periodic task?",
+     opts:["A task that responds to each message it receives",
+           "A task that is activated by a timer event",
+           "A task that is activated by an external event",
+           "A task that is activated by an input event"],
+     correct:1},
+    {q:"What is a demand-driven task?",
+     opts:["A task that responds to each message it receives",
+           "A task that is activated by an internal message or event from another task",
+           "A task that is activated by an external event",
+           "A task that is activated by an input event"],
+     correct:1},
+    {q:"What is a control task?",
+     opts:["A task that controls other tasks",
+           "A task that executes a statechart",
+           "A task that executes on demand",
+           "A task that controls I/O devices"],
+     correct:1},
+    {q:"What is a user interaction task?",
+     opts:["A task that interacts with I/O devices",
+           "A task that interacts with users",
+           "A task that interacts with a user sequentially",
+           "A task that interacts with a user concurrently"],
+     correct:2},
+    {q:"Which of the following is true for a Centralized Control architectural pattern?",
+     opts:["Control is divided among various control components.",
+           "It provides the overall control and sequencing of the system.",
+           "It provides overall control by coordinating several control components.",
+           "It provides overall control over various I/O objects."],
+     correct:1},
+    {q:"Which of the following is true for a Distributed Control architectural pattern?",
+     opts:["Control is divided among various control components.",
+           "It responds to multiple requests from client subsystems.",
+           "It provides overall control by coordinating several control components.",
+           "It provides distributed control over various I/O objects."],
+     correct:0},
+    {q:"Which of the following is true for a Hierarchical Control architectural pattern?",
+     opts:["Control is divided among various control components.",
+           "It provides overall control over several client subsystems.",
+           "It provides overall control by coordinating several control components.",
+           "It provides overall control over various I/O objects."],
+     correct:2},
+    {q:"Which of the following is NOT a case of event synchronization?",
+     opts:["External event",
+           "Internal event",
+           "Timer event",
+           "User event"],
+     correct:3}
+  ]
+},
+{
+  name:"Chương 19 — Designing Software Product Line Architectures",
+  short:"C19",
+  questions:[
+    {q:"What is a software product line (SPL)?",
+     opts:["A family of systems with some common components and some variable components",
+           "An assembly line",
+           "A family of identical systems",
+           "The software products marketed by a company"],
+     correct:0},
+    {q:"What is an optional use case?",
+     opts:["A use case with some optional steps",
+           "A use case that does not need to be developed",
+           "A use case that is required by some product line members but not others",
+           "A use case that can be chosen in place of a different use case in a SPL member"],
+     correct:2},
+    {q:"What is a use case variation point?",
+     opts:["A variable use case",
+           "A location in the use case at which change can occur",
+           "An alternative use case",
+           "A location in the use case where an alternative path can start"],
+     correct:1},
+    {q:"What is a SPL feature?",
+     opts:["A requirement or characteristic that is provided by one or more SPL members",
+           "A marketing need",
+           "A class provided by the SPL",
+           "A SPL use case"],
+     correct:0},
+    {q:"What is a SPL feature group?",
+     opts:["A collection of features",
+           "A group of features with a particular constraint on their usage in a SPL member",
+           "A group of mutually exclusive features",
+           "A group of optional features with a particular constraint on their usage in a SPL member"],
+     correct:1},
+    {q:"What is a kernel class in a SPL?",
+     opts:["An entity class in the SPL",
+           "A SPL class that stores essential data",
+           "A class that is required by all members of the SPL",
+           "An external class to the SPL"],
+     correct:2},
+    {q:"What two categories of stereotypes are used in modeling SPL classes?",
+     opts:["Kernel and optional stereotypes",
+           "Optional and variant stereotypes",
+           "Common and variant stereotypes",
+           "Reuse and application role stereotypes"],
+     correct:3},
+    {q:"How are feature conditions used in a SPL state machine?",
+     opts:["A guard condition",
+           "A condition that is True or False",
+           "To identify if a feature is selected or not in the state machine",
+           "To allow state machine inheritance"],
+     correct:2},
+    {q:"What is a kernel system in a SPL?",
+     opts:["A member of the SPL only composed of kernel classes",
+           "A member of the SPL composed of kernel classes and possibly some default classes",
+           "A member of the SPL composed of kernel classes and possibly some optional classes",
+           "A member of the SPL composed of kernel classes and possibly some entity classes"],
+     correct:1},
+    {q:"What does the SPL software architecture describe?",
+     opts:["The software inside a family of buildings",
+           "The structure of a client/server product family",
+           "The overall structure of the software product line",
+           "The software product line classes and their relationships"],
+     correct:2}
+  ]
+},
+{
+  name:"Chương 20 — Software Quality Attributes",
+  short:"C20",
+  questions:[
+    {q:"What do software quality attributes address?",
+     opts:["Software functional requirements",
+           "Software nonfunctional requirements",
+           "Software performance requirements",
+           "Software availability requirements"],
+     correct:1},
+    {q:"What is maintainability?",
+     opts:["The extent to which software is capable of being changed before deployment",
+           "The extent to which software is capable of being changed after deployment",
+           "The extent to which software is capable of being changed during development",
+           "The extent to which software is capable of being changed after development"],
+     correct:1},
+    {q:"What is modifiability?",
+     opts:["The extent to which software is capable of being modified after deployment",
+           "The extent to which software is capable of being modified after initial development",
+           "The extent to which software is capable of being modified during and after initial development",
+           "The extent to which software is capable of being changed before deployment"],
+     correct:2},
+    {q:"What is testability?",
+     opts:["The extent to which software is capable of being developed",
+           "The extent to which software is capable of being tested before deployment",
+           "The extent to which software is capable of being tested after deployment",
+           "The extent to which the software is understood"],
+     correct:1},
+    {q:"Traceability is the extent to which a product:",
+     opts:["Can be traced back to products of previous phases",
+           "Traced back to the requirements",
+           "Traced forward to implementation",
+           "Deployed to a hardware configuration"],
+     correct:0},
+    {q:"What is scalability?",
+     opts:["The extent to which an application can grow",
+           "The extent to which the system is capable of growing after its initial deployment",
+           "The extent to which the system is capable of growing during development",
+           "The extent to which the system is capable of being scaled"],
+     correct:1},
+    {q:"What is reusability?",
+     opts:["The extent to which software implementation is reusable",
+           "The extent to which software is capable of being reused",
+           "The extent to which SPL technology can be introduced",
+           "The extent to which the software is common among a program family"],
+     correct:1},
+    {q:"Which of the following is not performance-related?",
+     opts:["System response time",
+           "System throughput",
+           "System availability",
+           "System capacity"],
+     correct:2},
+    {q:"Which of the following is not addressed by a secure system?",
+     opts:["System penetration",
+           "Denial of service",
+           "System scalability",
+           "System authorization"],
+     correct:2},
+    {q:"Which of the following system problems does availability address?",
+     opts:["Denial of service",
+           "Single point of failure",
+           "System throughput",
+           "System penetration"],
+     correct:1}
+  ]
+}
+];
+const LETTERS = ["a","b","c","d"];
+
+// ---------- State ----------
+let mode = "practice";      // 'practice' | 'test'
+let QUESTIONS = [];         // bộ câu hỏi đang hoạt động (theo chương đã chọn)
+let order = [];             // thứ tự câu hỏi (index vào QUESTIONS)
+let optOrders = [];         // optOrders[pos] = mảng index đáp án hiển thị
+let answers = [];           // answers[pos] = index hiển thị đã chọn, hoặc null
+let locked = [];            // practice: đã chốt đáp án chưa
+let submitted = false;      // test: đã nộp chưa
+let cur = 0;
+let confirmSubmit = false;
+
+function shuffleArr(a){
+  a = a.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function initChapterSelect(){
+  const sel = document.getElementById("chapterSel");
+  CHAPTERS.forEach((c,i)=>{
+    const o = document.createElement("option");
+    o.value = String(i); o.textContent = c.name;
+    sel.appendChild(o);
+  });
+  const total = CHAPTERS.reduce((s,c)=>s+c.questions.length,0);
+  const o = document.createElement("option");
+  o.value = "all"; o.textContent = "Tất cả các chương ("+total+" câu)";
+  sel.appendChild(o);
+}
+
+function loadChapter(){
+  const v = document.getElementById("chapterSel").value || "0";
+  if(v==="all"){
+    QUESTIONS = [];
+    CHAPTERS.forEach(c=>c.questions.forEach(q=>QUESTIONS.push({q:q.q,opts:q.opts,correct:q.correct,ch:c.short})));
+    document.getElementById("sub").textContent =
+      "Tổng hợp Chương 1–"+CHAPTERS.length+" · "+QUESTIONS.length+" câu trắc nghiệm";
+  } else {
+    const c = CHAPTERS[parseInt(v)];
+    QUESTIONS = c.questions.map(q=>({q:q.q,opts:q.opts,correct:q.correct,ch:null}));
+    document.getElementById("sub").textContent = c.name+" · "+QUESTIONS.length+" câu trắc nghiệm";
+  }
+}
+
+function buildSession(qIndices){
+  const shuf = document.getElementById("shuffleChk").checked;
+  order = shuf ? shuffleArr(qIndices) : qIndices.slice();
+  optOrders = order.map(()=> shuf ? shuffleArr([0,1,2,3]) : [0,1,2,3]);
+  answers = order.map(()=>null);
+  locked  = order.map(()=>false);
+  submitted = false;
+  confirmSubmit = false;
+  cur = 0;
+  showQuestionView();
+  renderAll();
+}
+
+function restart(){
+  loadChapter();
+  buildSession(QUESTIONS.map((_,i)=>i));
+}
+function retryWrong(){
+  const wrong = [];
+  order.forEach((qi,pos)=>{
+    const dispCorrect = optOrders[pos].indexOf(QUESTIONS[qi].correct);
+    if(answers[pos] !== dispCorrect) wrong.push(qi);
+  });
+  if(wrong.length===0){ restart(); return; }
+  buildSession(wrong);
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById("modePractice").classList.toggle("active", m==="practice");
+  document.getElementById("modeTest").classList.toggle("active", m==="test");
+  restart();
+}
+
+// ---------- Render ----------
+function isDone(pos){
+  return mode==="practice" ? locked[pos] : submitted;
+}
+function isCorrect(pos){
+  const qi = order[pos];
+  const dispCorrect = optOrders[pos].indexOf(QUESTIONS[qi].correct);
+  return answers[pos] === dispCorrect;
+}
+function resultsShown(){
+  return document.getElementById("rcard").classList.contains("show");
+}
+
+function renderRail(){
+  const rail = document.getElementById("rail");
+  rail.innerHTML = "";
+  rail.classList.toggle("dense", order.length>12);
+  const init = document.createElement("div");
+  init.className = "pseudo init"; init.title = "initial state";
+  rail.appendChild(init);
+  order.forEach((qi,pos)=>{
+    const e = document.createElement("div"); e.className = "edge"; rail.appendChild(e);
+    const n = document.createElement("button");
+    n.className = "node"; n.textContent = pos+1; n.type = "button";
+    n.setAttribute("aria-label","Câu "+(pos+1));
+    if(pos===cur && !resultsShown()) n.classList.add("current");
+    if(isDone(pos)){
+      n.classList.add(isCorrect(pos) ? "ok" : "bad");
+    } else if(answers[pos]!==null){
+      n.classList.add("picked");
+    }
+    n.onclick = ()=>{ showQuestionView(); cur = pos; renderAll(); };
+    rail.appendChild(n);
+  });
+  const e = document.createElement("div"); e.className = "edge"; rail.appendChild(e);
+  const fin = document.createElement("div");
+  fin.className = "pseudo final"; fin.title = "final state";
+  rail.appendChild(fin);
+}
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+function renderQuestion(){
+  const pos = cur, qi = order[pos], Q = QUESTIONS[qi];
+  const done = isDone(pos);
+  const dispCorrect = optOrders[pos].indexOf(Q.correct);
+
+  document.getElementById("qmeta").textContent =
+    "Câu " + (pos+1) + " / " + order.length +
+    (Q.ch ? "  ·  "+Q.ch : "") +
+    (mode==="test" && !submitted ? "  ·  chế độ kiểm tra" : "");
+  document.getElementById("qtext").textContent = Q.q;
+
+  const box = document.getElementById("opts");
+  box.innerHTML = "";
+  optOrders[pos].forEach((origIdx, dispIdx)=>{
+    const b = document.createElement("button");
+    b.className = "opt"; b.type = "button";
+    b.innerHTML = '<span class="tag">'+LETTERS[dispIdx]+'</span><span>'+esc(Q.opts[origIdx])+'</span>';
+    if(done){
+      b.disabled = true;
+      if(dispIdx===dispCorrect) b.classList.add("ok");
+      else if(dispIdx===answers[pos]) b.classList.add("bad");
+      else b.classList.add("dim");
+    } else {
+      if(dispIdx===answers[pos]) b.classList.add("sel");
+      b.onclick = ()=>pick(dispIdx);
+    }
+    box.appendChild(b);
+  });
+
+  const fb = document.getElementById("feedback");
+  fb.className = "feedback";
+  if(done && answers[pos]!==null){
+    if(isCorrect(pos)){
+      fb.classList.add("ok"); fb.textContent = "Chính xác — đáp án ("+LETTERS[dispCorrect]+").";
+    } else {
+      fb.classList.add("bad");
+      fb.textContent = "Sai. Bạn chọn ("+LETTERS[answers[pos]]+"), đáp án đúng là ("+LETTERS[dispCorrect]+").";
+    }
+  } else if(done && answers[pos]===null){
+    fb.classList.add("bad"); fb.textContent = "Chưa trả lời. Đáp án đúng là ("+LETTERS[dispCorrect]+").";
+  }
+
+  document.getElementById("prevBtn").disabled = (pos===0);
+  const nextBtn = document.getElementById("nextBtn");
+  nextBtn.textContent = (pos===order.length-1 && (mode==="practice"||submitted)) ? "Kết quả →" : "Sau →";
+  const sb = document.getElementById("submitBtn");
+  if(mode==="test" && !submitted){
+    sb.style.display = "";
+    const un = answers.filter(a=>a===null).length;
+    sb.textContent = confirmSubmit ? ("Vẫn nộp ("+un+" câu trống)") : "Nộp bài";
+  } else {
+    sb.style.display = "none";
+  }
+}
+
+function renderAll(){ renderRail(); if(!resultsShown()) renderQuestion(); }
+
+// ---------- Actions ----------
+function pick(dispIdx){
+  if(isDone(cur)) return;
+  answers[cur] = dispIdx;
+  confirmSubmit = false;
+  if(mode==="practice") locked[cur] = true;
+  renderAll();
+}
+
+function go(step){
+  if(step===1 && cur===order.length-1){
+    if(mode==="practice" || submitted){ showResults(); return; }
+  }
+  cur = Math.min(order.length-1, Math.max(0, cur+step));
+  renderAll();
+}
+
+function trySubmit(){
+  const un = answers.filter(a=>a===null).length;
+  if(un>0 && !confirmSubmit){
+    confirmSubmit = true; renderQuestion(); return;
+  }
+  submitted = true; confirmSubmit = false;
+  showResults();
+}
+
+function showQuestionView(){
+  document.getElementById("rcard").classList.remove("show");
+  document.getElementById("qcard").style.display = "";
+}
+function reviewFrom(pos){ showQuestionView(); cur = pos; renderAll(); }
+
+function showResults(){
+  if(mode==="practice" && locked.some(l=>!l)){
+    cur = locked.indexOf(false); renderAll(); return;
+  }
+  let n = 0;
+  order.forEach((_,pos)=>{ if(isCorrect(pos)) n++; });
+  document.getElementById("scoreBig").textContent = n + " / " + order.length;
+  document.getElementById("scoreNote").textContent =
+    "đúng " + Math.round(n/order.length*100) + "% · " +
+    (mode==="test" ? "chế độ kiểm tra" : "chế độ luyện tập");
+  const list = document.getElementById("rlist");
+  list.innerHTML = "";
+  order.forEach((qi,pos)=>{
+    const ok = isCorrect(pos);
+    const Q = QUESTIONS[qi];
+    const b = document.createElement("button");
+    b.className = "ritem " + (ok?"ok":"bad"); b.type = "button";
+    b.innerHTML = '<span class="st">'+(ok?"ĐÚNG":"SAI")+'</span><span>Câu '+(pos+1)+
+      (Q.ch ? " ("+Q.ch+")" : "")+': '+esc(Q.q)+'</span>';
+    b.onclick = ()=>reviewFrom(pos);
+    list.appendChild(b);
+  });
+  document.getElementById("retryWrong").style.display =
+    order.every((_,pos)=>isCorrect(pos)) ? "none" : "";
+  document.getElementById("qcard").style.display = "none";
+  document.getElementById("rcard").classList.add("show");
+  renderRail();
+}
+
+// ---------- Keyboard ----------
+document.addEventListener("keydown", (e)=>{
+  if(resultsShown()) return;
+  const k = e.key.toLowerCase();
+  if(["1","2","3","4"].includes(k)) pick(parseInt(k)-1);
+  else if(["a","b","c","d"].includes(k)) pick(LETTERS.indexOf(k));
+  else if(e.key==="ArrowRight" || e.key==="Enter") go(1);
+  else if(e.key==="ArrowLeft") go(-1);
+});
+
+initChapterSelect();
+restart();
+</script>
+</body>
+</html>
