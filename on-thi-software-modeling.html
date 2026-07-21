@@ -44,7 +44,7 @@ body{
 
 /* ---------- Two-column layout: question left · progress right ---------- */
 .layout{
-  display:grid;grid-template-columns:minmax(0,1fr) 168px;
+  display:grid;grid-template-columns:minmax(0,1fr) 208px;
   gap:24px;align-items:start;
 }
 .main{min-width:0}
@@ -158,31 +158,22 @@ h1{
 .btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .push{margin-left:auto}
 
-/* ---------- Rail: vertical state-diagram progress ---------- */
+/* ---------- Rail: 5-column progress grid ---------- */
 .rail{
-  display:flex;flex-direction:column;align-items:center;gap:0;
+  display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+  align-items:center;justify-items:stretch;
   margin:0;padding:2px;
   max-height:calc(100vh - 120px);overflow-y:auto;overflow-x:hidden;
 }
-.rail .pseudo{flex:none}
-.rail .init{width:10px;height:10px;border-radius:50%;background:var(--ink)}
-.rail .final{
-  width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);
-  position:relative;flex:none;
-}
-.rail .final::after{
-  content:"";position:absolute;inset:2px;border-radius:50%;background:var(--ink);
-}
-.rail .edge{flex:none;width:2px;height:15px;background:var(--line)}
+.rail .edge,.rail .pseudo{display:none}
 .node{
-  flex:none;width:30px;height:30px;border-radius:50%;
+  width:100%;height:auto;aspect-ratio:1/1;border-radius:50%;
   border:2px solid var(--line);background:var(--card);
-  font-family:var(--mono);font-size:.7rem;font-weight:500;color:var(--ink-soft);
+  font-family:var(--mono);font-size:.72rem;font-weight:500;color:var(--ink-soft);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:transform .1s;
 }
-.rail.dense .node{width:26px;height:26px;font-size:.62rem}
-.rail.dense .edge{height:9px}
+.rail.dense .node{font-size:.64rem;border-width:1.5px}
 .node:hover{transform:scale(1.12)}
 .node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .node.current{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
@@ -272,17 +263,14 @@ h1{
   }
   .side-title{margin-bottom:8px}
   .rail{
-    flex-direction:row;align-items:center;
-    max-height:none;overflow-y:hidden;overflow-x:auto;padding:2px 2px 8px;
+    grid-template-columns:repeat(10,1fr);
+    max-height:200px;overflow-y:auto;padding:2px;
   }
-  .rail .edge{flex:1;width:auto;height:2px;min-width:6px}
-  .rail.dense .edge{min-width:3px;height:2px}
 }
 @media (max-width:520px){
   h1{font-size:1.5rem}
   .card{padding:20px 16px}
-  .node{width:24px;height:24px;font-size:.62rem}
-  .rail.dense .node{width:21px;height:21px;font-size:.55rem}
+  .node{font-size:.6rem}
   .score-big{font-size:2.1rem}
 }
 @media (prefers-reduced-motion:reduce){
