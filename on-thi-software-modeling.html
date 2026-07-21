@@ -56,13 +56,42 @@ h1{
 .controls{
   display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:26px;
 }
+.chpick{position:relative}
 .chsel{
   font-family:var(--body);font-size:.88rem;font-weight:500;color:var(--ink);
   padding:9px 12px;border-radius:var(--radius);border:1px solid var(--line);
   background:var(--card);cursor:pointer;max-width:100%;
+  display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
+  min-width:230px;text-align:left;
 }
 .chsel:hover{border-color:var(--ink)}
 .chsel:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chsel #chselLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chcaret{color:var(--ink-soft);font-size:.7rem;flex:none}
+.chpop{
+  position:absolute;top:calc(100% + 6px);left:0;z-index:30;
+  width:340px;max-width:88vw;max-height:360px;overflow:auto;
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:0 10px 30px rgba(19,28,43,.16);padding:8px;
+}
+.chpop[hidden]{display:none}
+.chpop-actions{
+  display:flex;gap:8px;padding:2px 2px 8px;
+  border-bottom:1px solid var(--line);margin-bottom:6px;
+  position:sticky;top:-8px;background:var(--card);
+}
+.chpop-actions button{
+  flex:1;font-family:var(--body);font-size:.8rem;font-weight:600;color:var(--accent);
+  background:var(--accent-bg);border:none;border-radius:8px;padding:7px;cursor:pointer;
+}
+.chpop-actions button:hover{background:var(--accent);color:#fff}
+.chopt{
+  display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;
+  cursor:pointer;font-size:.85rem;color:var(--ink);line-height:1.35;
+}
+.chopt:hover{background:var(--paper)}
+.chopt input{margin-top:2px;flex:none;width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.chopt .chq{color:var(--ink-soft);font-family:var(--mono);font-size:.72rem}
 .seg{
   display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);
   overflow:hidden;background:var(--card);
@@ -228,7 +257,19 @@ h1{
   <p class="sub" id="sub"></p>
 
   <div class="controls">
-    <select id="chapterSel" class="chsel" onchange="restart()" aria-label="Chọn chương"></select>
+    <div class="chpick" id="chpick">
+      <button type="button" class="chsel" id="chselBtn" aria-haspopup="true" aria-expanded="false" onclick="toggleChPop(event)">
+        <span id="chselLabel">Chọn chương</span>
+        <span class="chcaret" aria-hidden="true">▾</span>
+      </button>
+      <div class="chpop" id="chpop" hidden>
+        <div class="chpop-actions">
+          <button type="button" onclick="setAllChapters(true)">Chọn tất cả</button>
+          <button type="button" onclick="setAllChapters(false)">Bỏ chọn</button>
+        </div>
+        <div class="chpop-list" id="chpopList"></div>
+      </div>
+    </div>
     <div class="seg" role="group" aria-label="Chế độ">
       <button id="modePractice" class="active" onclick="setMode('practice')">Luyện tập</button>
       <button id="modeTest" onclick="setMode('test')">Kiểm tra</button>
@@ -1597,30 +1638,81 @@ function shuffleArr(a){
   return a;
 }
 
+let selectedChapters = new Set([0]);   // các chương đang chọn (index vào CHAPTERS)
+
 function initChapterSelect(){
-  const sel = document.getElementById("chapterSel");
+  const list = document.getElementById("chpopList");
+  list.innerHTML = "";
   CHAPTERS.forEach((c,i)=>{
-    const o = document.createElement("option");
-    o.value = String(i); o.textContent = c.name;
-    sel.appendChild(o);
+    const lbl = document.createElement("label");
+    lbl.className = "chopt";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.value = String(i);
+    cb.checked = selectedChapters.has(i);
+    cb.onchange = ()=>{
+      if(cb.checked) selectedChapters.add(i); else selectedChapters.delete(i);
+      updateChLabel(); restart();
+    };
+    const span = document.createElement("span");
+    span.innerHTML = esc(c.name)+' <span class="chq">'+c.questions.length+' câu</span>';
+    lbl.appendChild(cb); lbl.appendChild(span);
+    list.appendChild(lbl);
   });
-  const total = CHAPTERS.reduce((s,c)=>s+c.questions.length,0);
-  const o = document.createElement("option");
-  o.value = "all"; o.textContent = "Tất cả các chương ("+total+" câu)";
-  sel.appendChild(o);
+  updateChLabel();
 }
 
+function updateChLabel(){
+  const n = selectedChapters.size, total = CHAPTERS.length;
+  const el = document.getElementById("chselLabel");
+  if(n===0) el.textContent = "Chưa chọn chương";
+  else if(n===total) el.textContent = "Tất cả các chương";
+  else if(n===1) el.textContent = CHAPTERS[[...selectedChapters][0]].name;
+  else el.textContent = "Đã chọn "+n+"/"+total+" chương";
+}
+
+function setAllChapters(on){
+  selectedChapters = new Set(on ? CHAPTERS.map((_,i)=>i) : []);
+  document.querySelectorAll("#chpopList input").forEach(cb=>{
+    cb.checked = selectedChapters.has(parseInt(cb.value));
+  });
+  updateChLabel(); restart();
+}
+
+function toggleChPop(e){
+  e.stopPropagation();
+  const pop = document.getElementById("chpop");
+  const btn = document.getElementById("chselBtn");
+  const willOpen = pop.hasAttribute("hidden");
+  pop.toggleAttribute("hidden", !willOpen);
+  btn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+}
+document.addEventListener("click",(e)=>{
+  const pick = document.getElementById("chpick");
+  if(pick && !pick.contains(e.target)){
+    document.getElementById("chpop").setAttribute("hidden","");
+    document.getElementById("chselBtn").setAttribute("aria-expanded","false");
+  }
+});
+
 function loadChapter(){
-  const v = document.getElementById("chapterSel").value || "0";
-  if(v==="all"){
-    QUESTIONS = [];
-    CHAPTERS.forEach(c=>c.questions.forEach(q=>QUESTIONS.push({q:q.q,opts:q.opts,correct:q.correct,ch:c.short})));
-    document.getElementById("sub").textContent =
-      "Tổng hợp Chương 1–"+CHAPTERS.length+" · "+QUESTIONS.length+" câu trắc nghiệm";
+  const idxs = [...selectedChapters].sort((a,b)=>a-b);
+  const sub = document.getElementById("sub");
+  QUESTIONS = [];
+  if(idxs.length===0){
+    sub.textContent = "Chưa chọn chương nào — hãy chọn ít nhất một chương để bắt đầu.";
+    return;
+  }
+  const multi = idxs.length>1;
+  idxs.forEach(i=>{
+    const c = CHAPTERS[i];
+    c.questions.forEach(q=>QUESTIONS.push({q:q.q,opts:q.opts,correct:q.correct,ch: multi ? c.short : null}));
+  });
+  if(idxs.length===CHAPTERS.length){
+    sub.textContent = "Tổng hợp Chương 1–"+CHAPTERS.length+" · "+QUESTIONS.length+" câu trắc nghiệm";
+  } else if(idxs.length===1){
+    sub.textContent = CHAPTERS[idxs[0]].name+" · "+QUESTIONS.length+" câu trắc nghiệm";
   } else {
-    const c = CHAPTERS[parseInt(v)];
-    QUESTIONS = c.questions.map(q=>({q:q.q,opts:q.opts,correct:q.correct,ch:null}));
-    document.getElementById("sub").textContent = c.name+" · "+QUESTIONS.length+" câu trắc nghiệm";
+    sub.textContent = "Đã chọn "+idxs.length+" chương · "+QUESTIONS.length+" câu trắc nghiệm";
   }
 }
 
@@ -1639,7 +1731,19 @@ function buildSession(qIndices){
 
 function restart(){
   loadChapter();
+  if(QUESTIONS.length===0){ showEmptyState(); return; }
   buildSession(QUESTIONS.map((_,i)=>i));
+}
+
+function showEmptyState(){
+  showQuestionView();
+  document.getElementById("rail").innerHTML = "";
+  document.getElementById("qmeta").textContent = "";
+  document.getElementById("qtext").textContent = "Hãy chọn ít nhất một chương để bắt đầu ôn luyện.";
+  document.getElementById("opts").innerHTML = "";
+  document.getElementById("feedback").className = "feedback";
+  document.getElementById("feedback").textContent = "";
+  ["prevBtn","nextBtn","submitBtn"].forEach(id=>document.getElementById(id).style.display="none");
 }
 function retryWrong(){
   const wrong = [];
@@ -1742,8 +1846,10 @@ function renderQuestion(){
     fb.classList.add("bad"); fb.textContent = "Chưa trả lời. Đáp án đúng là ("+LETTERS[dispCorrect]+").";
   }
 
-  document.getElementById("prevBtn").disabled = (pos===0);
+  const prevBtn = document.getElementById("prevBtn");
+  prevBtn.style.display = ""; prevBtn.disabled = (pos===0);
   const nextBtn = document.getElementById("nextBtn");
+  nextBtn.style.display = "";
   nextBtn.textContent = (pos===order.length-1 && (mode==="practice"||submitted)) ? "Kết quả →" : "Sau →";
   const sb = document.getElementById("submitBtn");
   if(mode==="test" && !submitted){
