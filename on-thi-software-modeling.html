@@ -40,7 +40,32 @@ body{
   padding:32px 16px 64px;
   line-height:1.5;
 }
-.wrap{max-width:720px;margin:0 auto}
+.wrap{max-width:960px;margin:0 auto}
+
+/* ---------- Two-column layout: question left · progress right ---------- */
+.layout{
+  display:grid;grid-template-columns:minmax(0,1fr) 168px;
+  gap:24px;align-items:start;
+}
+.main{min-width:0}
+.side{
+  position:sticky;top:20px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:16px 12px;box-shadow:0 1px 3px rgba(19,28,43,.05);
+}
+.side-title{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-soft);text-align:center;margin-bottom:12px;
+}
+
+/* ---------- Custom scrollbars ---------- */
+*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{
+  background:var(--line);border-radius:8px;border:2px solid transparent;background-clip:padding-box;
+}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-soft);background-clip:padding-box}
 
 /* ---------- Header ---------- */
 .eyebrow{
@@ -133,10 +158,11 @@ h1{
 .btn:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .push{margin-left:auto}
 
-/* ---------- Rail: state-diagram progress ---------- */
+/* ---------- Rail: vertical state-diagram progress ---------- */
 .rail{
-  display:flex;align-items:center;gap:0;margin:0 0 26px;padding:0 2px 6px;
-  overflow-x:auto;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  margin:0;padding:2px;
+  max-height:calc(100vh - 120px);overflow-y:auto;overflow-x:hidden;
 }
 .rail .pseudo{flex:none}
 .rail .init{width:10px;height:10px;border-radius:50%;background:var(--ink)}
@@ -147,7 +173,7 @@ h1{
 .rail .final::after{
   content:"";position:absolute;inset:2px;border-radius:50%;background:var(--ink);
 }
-.rail .edge{flex:1;height:2px;background:var(--line);min-width:6px}
+.rail .edge{flex:none;width:2px;height:15px;background:var(--line)}
 .node{
   flex:none;width:30px;height:30px;border-radius:50%;
   border:2px solid var(--line);background:var(--card);
@@ -155,8 +181,8 @@ h1{
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:transform .1s;
 }
-.rail.dense .node{width:24px;height:24px;font-size:.6rem}
-.rail.dense .edge{min-width:3px}
+.rail.dense .node{width:26px;height:26px;font-size:.62rem}
+.rail.dense .edge{height:9px}
 .node:hover{transform:scale(1.12)}
 .node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .node.current{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
@@ -238,6 +264,20 @@ h1{
 .ritem.bad .st{color:var(--bad)}
 .ractions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
 
+/* Narrow: stack columns, progress moves on top and runs horizontally */
+@media (max-width:760px){
+  .layout{grid-template-columns:1fr;gap:16px}
+  .side{
+    position:static;order:-1;padding:12px 10px;
+  }
+  .side-title{margin-bottom:8px}
+  .rail{
+    flex-direction:row;align-items:center;
+    max-height:none;overflow-y:hidden;overflow-x:auto;padding:2px 2px 8px;
+  }
+  .rail .edge{flex:1;width:auto;height:2px;min-width:6px}
+  .rail.dense .edge{min-width:3px;height:2px}
+}
 @media (max-width:520px){
   h1{font-size:1.5rem}
   .card{padding:20px 16px}
@@ -282,8 +322,8 @@ h1{
     <button class="btn push" onclick="restart()">Làm lại</button>
   </div>
 
-  <div class="rail" id="rail" aria-label="Tiến độ"></div>
-
+  <div class="layout">
+   <div class="main">
   <div class="card" id="qcard">
     <div class="qmeta" id="qmeta"></div>
     <div class="qtext" id="qtext"></div>
@@ -311,6 +351,12 @@ h1{
   </div>
 
   <div class="hint">Phím tắt: 1–4 hoặc A–D chọn đáp án · ← / → chuyển câu · Enter câu tiếp theo</div>
+   </div>
+   <aside class="side">
+     <div class="side-title">Tiến độ câu</div>
+     <div class="rail" id="rail" aria-label="Tiến độ"></div>
+   </aside>
+  </div>
 </div>
 
 <script>
